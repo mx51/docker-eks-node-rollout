@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+  eks-node-rollout:
+    image: cmdlabs/eks-node-rollout:testing
+    build: .
+    env_file: .env
+    volumes:
+      - .:/work
+    working_dir: /work
+

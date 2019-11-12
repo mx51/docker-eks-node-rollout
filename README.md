@@ -1,5 +1,5 @@
-# docker-eks-node-rollout
-This is a CLI tool that assists with rolling out changes to your EKS workers.
+# eks-node-rollout
+eks-node-rollout is a CLI tool that assists with rolling updates to your EKS workers.
 
   1. add an EC2 instance to the ASG
   2. drain an instance that is outdated 
@@ -21,14 +21,14 @@ Options:
 The tool also accepts environment variables with the prefix `EKS_NODE_ROLLOUT_*` e.g. `EKS_NODE_ROLLOUT_ASG_NAME`.
 
 ## Docker Image
-This tool is available as a Docker image: `aarongorka/eks-node-rollout:latest`
+This tool is available as a Docker image: `cmdlabs/eks-node-rollout:0.1.0`
 
 docker-compose.yml:
 ```yml
 version: '3.7'
 services:
-  sonar-poller:
-    image: aarongorka/eks-node-rollout:latest
+  eks-node-rollout:
+    image: cmdlabs/eks-node-rollout:0.1.0
     env_file: .env
     volumes:
       - .:/work

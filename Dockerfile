@@ -1,8 +1,10 @@
-FROM python:3-alpine
+FROM python:3.7.5-alpine3.10
 ENV PYTHONUNBUFFERED=1
-WORKDIR /work
-RUN apk add --no-cache openssl-dev libffi-dev build-base
-COPY requirements.txt /app/requirements.txt
-RUN pip3 install -r requirements.txt
+RUN apk add --no-cache curl openssl-dev libffi-dev build-base
+COPY requirements.txt /eks_node_rollout/requirements.txt
+RUN pip3 install -r /eks_node_rollout/requirements.txt
 COPY /eks_node_rollout /eks_node_rollout
+RUN curl -LsO https://storage.googleapis.com/kubernetes-release/release/v1.14.0/bin/linux/amd64/kubectl && \
+    mv kubectl /usr/bin/kubectl && \
+    chmod +x /usr/bin/kubectl
 CMD ["python3", "/eks_node_rollout/eks_node_rollout.py"]
