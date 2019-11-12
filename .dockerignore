@@ -1,0 +1,10 @@
+Dockerfile
+Makefile
+*.yml
+*.yaml
+.env*
+venv/
+.git/
+.*
+.tox/
+tox.ini

@@ -1,0 +1,5 @@
+venv/
+.env*
+!.env.template
+.tox/
+**/__pycache__
