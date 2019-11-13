@@ -6,9 +6,9 @@ When updating an Auto Scaling Group with a tool like Terraform, no functionality
 
 ## Overview of Steps
   1. add an EC2 instance to the ASG
-  2. drain an instance that is outdated 
-  3. terminate the outdated instance
-  4. wait for the new instance to be healthy
+  2. wait for the new instance to be healthy
+  3. drain an instance that is outdated
+  4. terminate the outdated instance
 
 ## Usage
 ```

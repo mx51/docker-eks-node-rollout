@@ -97,6 +97,16 @@ def get_latest_instance(asg_client, ec2_client, asg_name):
 
     return latest_instance
 
+def get_num_of_instances(asg_client, asg_name):
+    """Returns number of instances in an ASG"""
+
+    response = asg_client.describe_auto_scaling_groups(
+        AutoScalingGroupNames=[
+            asg_name
+        ]
+    )
+    instances = [instance for instance in instances if instance["State"]["Name"] in ["running", "pending"]]
+    return len(instances)
 
 @click.command()
 @click.option('--asg-name', envvar='EKS_NODE_ROLLOUT_ASG_NAME', required=False, help="ASG name to roll")
@@ -116,15 +126,20 @@ def rollout_nodes(asg_name, dry_run):
         return
 
     for instance in instances:
-        node_name = instance["PrivateDnsName"]
+        before_instance_count = get_num_of_instances(asg_client=asg_client, asg_name=asg_name)
         add_node(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
-        logging.info(f'Draining node {node_name} (--dry-run={dry_run})')
-        kubectl.drain(node_name, "--force", "--delete-local-data=true", "--ignore-daemonsets=true", "--timeout=30s", f"--dry-run={dry_run}")
-        terminate_node(asg_client, instance["InstanceId"], dry_run)
         latest_instance = get_latest_instance(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
         logging.info(f'Waiting for instance {node_name} to be "Ready"')
         kubectl.wait("--for", "condition=Ready", f"node/{node_name}", "--timeout=300s")
         logging.info(f'Node {node_name} is now "Ready".')
+        after_instance_count = get_num_of_instances(asg_client=asg_client, asg_name=asg_name)
+        # because get_latest_instance() doesn't necessarily return the instance launched by add_node(), this is just a safety precaution to ensure we've actually launched a node
+        assert before_instance_count > after_instance_count
+
+        node_name = instance["PrivateDnsName"]
+        logging.info(f'Draining node {node_name} (--dry-run={dry_run})')
+        kubectl.drain(node_name, "--force", "--delete-local-data=true", "--ignore-daemonsets=true", "--timeout=30s", f"--dry-run={dry_run}")
+        terminate_node(asg_client, instance["InstanceId"], dry_run)
 
     logging.info(f"All instances in {asg_name} have been updated.")
 
