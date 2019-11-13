@@ -2,13 +2,16 @@
 eks-node-rollout is a CLI tool that assists with rolling updates to your EKS workers.
 
 ## Justification
-When updating an Auto Scaling Group with a tool like Terraform, no functionality exists to automatically terminate the old instances and launch new ones. This poses a problem in automated deployments (especially CI/CD pipelines): you will deploy updates, but not receieve any feedback on whether or not those changes actually worked. Only by manually terminating instances or scaling up/down can you find out if your changes are working. Performing blue/green deployments of ASGs does not help either, as you have no way of knowing when the workers in the new ASG have succesfully launched.
+When updating an Auto Scaling Group with a tool like Terraform, no functionality exists to perform a rolling update to the ASG.
+
+This poses a problem in automated deployments (especially CI/CD pipelines): you will deploy updates, but not receieve any feedback on whether or not those changes actually worked. Only by manually terminating instances or scaling up/down can you find out if your changes are working. Performing blue/green deployments of ASGs does not help either, as you have no way of knowing when the workers in the new ASG have succesfully launched.
 
 ## Overview of Steps
   1. add an EC2 instance to the ASG
   2. wait for the new instance to be healthy
   3. drain an instance that is outdated
   4. terminate the outdated instance
+  5. repeat until all instances are up to date
 
 ## Usage
 ```
