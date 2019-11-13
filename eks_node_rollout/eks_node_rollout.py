@@ -51,7 +51,7 @@ def describe_nodes_not_matching_lt(asg_client, ec2_client, asg_name):
 
     old_lt_instance_ids = [instance["InstanceId"] for instance in response["AutoScalingGroups"][0]["Instances"] if instance["LaunchTemplate"]["LaunchTemplateId"] != latest_lt]
     if len(old_lt_instance_ids) == 0:
-        logging.info("All instances are up to date, nothing to do!")
+        logging.debug(f"Found no outdated instances.")
         return None
 
     response = ec2_client.describe_instances(InstanceIds=old_lt_instance_ids)
@@ -97,6 +97,7 @@ def get_latest_instance(asg_client, ec2_client, asg_name):
 
     return latest_instance
 
+
 def get_num_of_instances(asg_client, asg_name):
     """Returns number of instances in an ASG"""
 
@@ -107,6 +108,7 @@ def get_num_of_instances(asg_client, asg_name):
     )
     instances = [instance for instance in instances if instance["State"]["Name"] in ["running", "pending"]]
     return len(instances)
+
 
 @click.command()
 @click.option('--asg-name', envvar='EKS_NODE_ROLLOUT_ASG_NAME', required=False, help="ASG name to roll")
@@ -123,6 +125,7 @@ def rollout_nodes(asg_name, dry_run):
     instances = describe_nodes_not_matching_lt(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
 
     if instances is None:
+        logging.info(f"All instances in {asg_name} are up to date, nothing to do!")
         return
 
     for instance in instances:
