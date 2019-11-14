@@ -111,7 +111,7 @@ def get_num_of_instances(asg_client, asg_name):
 
 
 @click.command()
-@click.option('--asg-name', envvar='EKS_NODE_ROLLOUT_ASG_NAME', required=False, help="ASG name to roll")
+@click.option('--asg-name', envvar='EKS_NODE_ROLLOUT_ASG_NAME', required=True, help="ASG name to roll")
 @click.option('--dry-run/--no-dry-run', envvar='EKS_NODE_ROLLOUT_DRY_RUN', default=True, help="Run with read-only API calls.")
 def rollout_nodes(asg_name, dry_run):
     """Retrieve all outdated workers and perform a rolling update on them."""
@@ -145,7 +145,6 @@ def rollout_nodes(asg_name, dry_run):
         terminate_node(asg_client, instance["InstanceId"], dry_run)
 
     logging.info(f"All instances in {asg_name} have been updated.")
-
 
 if __name__ == '__main__':
     rollout_nodes()
