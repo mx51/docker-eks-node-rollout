@@ -2,6 +2,8 @@
 ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/cmdlabs/eks-node-rollout) ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmdlabs/eks-node-rollout) ![Docker Pulls](https://img.shields.io/docker/pulls/cmdlabs/eks-node-rollout) ![Docker Stars](https://img.shields.io/docker/stars/cmdlabs/eks-node-rollout)
 eks-node-rollout is a CLI tool that assists with rolling updates to your EKS workers.
 
+https://hub.docker.com/r/cmdlabs/eks-node-rollout
+
 ## Justification
 When updating an Auto Scaling Group with a tool like Terraform, no functionality exists to perform a rolling update to the ASG.
 
