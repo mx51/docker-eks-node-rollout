@@ -19,7 +19,7 @@ This poses a problem in automated deployments (especially CI/CD pipelines): you 
 
 ## Usage
 ```
-Usage: eks_node_rollout.py [OPTIONS]
+Usage: eks-node-rollout [OPTIONS]
 
   Retrieve all outdated workers and perform a rolling update on them.
 
@@ -56,5 +56,5 @@ EKS_NODE_ROLLOUT_DRY_RUN
 Then it can be called as such:
 
 ```bash
-docker-compose run --rm eks-node-rollout
+docker-compose run --rm eks-node-rollout eks-node-rollout --asg_name=my-asg
 ```
