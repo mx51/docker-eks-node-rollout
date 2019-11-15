@@ -5,6 +5,7 @@ import pytest
 from eks_node_rollout import *
 from botocore.stub import Stubber, ANY
 import botocore.exceptions
+from unittest.mock import Mock, patch
 
 def test_add_node():
     asg_client = boto3.client("autoscaling", region_name="ap-southeast-2")
@@ -29,8 +30,8 @@ def test_add_node():
     stubber.activate()
     assert add_node(asg_client=asg_client, asg_name="foobar") is None
 
-
-def test_describe_nodes_not_matching_lt():
+@patch('eks_node_rollout.get_latest_lt_version', return_value="1")
+def test_describe_nodes_not_matching_lt(*args):
     asg_client = boto3.client("autoscaling", region_name="ap-southeast-2")
     asg_stubber = Stubber(asg_client)
     ec2_client = boto3.client("ec2", region_name="ap-southeast-2")
@@ -97,18 +98,24 @@ def test_describe_nodes_not_matching_lt():
     mock_response = {
         "Reservations": [
             {
-                "Instances": [                                                                                                                                                                                                             
-                    {                                                                                                                                                                                                                      
-                        'InstanceId': "foo",                                                                                                                                                                                            
+                "Instances": [
+                    {
+                        'InstanceId': "foo",
                         "PrivateDnsName": "foo.aws.local",
-                        "LaunchTime": datetime.datetime.now() - datetime.timedelta(days=1)                                                                                                                                                 
-                    },                                                                                             
-                    {                                                                                                                                                                                                                      
-                        'InstanceId': "bar",                                                                                                                                                                                            
+                        "LaunchTime": datetime.datetime.now() - datetime.timedelta(days=1),
+                        "State": {
+                            "Name": "pending"
+                        }
+                    },
+                    {
+                        'InstanceId': "bar",
                         "PrivateDnsName": "bar.aws.local",
-                        "LaunchTime": datetime.datetime.now() - datetime.timedelta(days=2)                                                                                                                                                 
-                    }                                                                                                                                                                                                                      
-                ]      
+                        "LaunchTime": datetime.datetime.now() - datetime.timedelta(days=2),
+                        "State": {
+                            "Name": "running"
+                        }
+                    }
+                ]
             }
         ]
     }
