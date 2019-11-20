@@ -221,7 +221,7 @@ def rollout_nodes(cluster_name, dry_run, debug):
             node_name = instance["PrivateDnsName"]
             logging.info(f'Draining node {node_name} (--dry-run={dry_run})')
             output = kubectl.drain(node_name, "--force", "--delete-local-data=true", "--ignore-daemonsets=true", "--timeout=120s", f"--dry-run={dry_run}")
-            print(output)
+            print(output.stdout.decode())
             terminate_node(asg_client, instance["InstanceId"], dry_run)
 
         logging.info(f"All instances in {asg_name} are up to date.")
