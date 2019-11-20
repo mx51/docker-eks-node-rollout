@@ -8,3 +8,10 @@ services:
       - .:/work
     working_dir: /work
 
+  pep8:
+    image: eeacms/pep8
+    entrypoint: []
+    volumes:
+      - .:/code:Z
+    network_mode: "none"
+    working_dir: /code
