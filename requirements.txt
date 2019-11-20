@@ -1,7 +1,7 @@
 awscli==1.16.164
 backoff==1.9.1
-boto3==1.10.21
-botocore==1.13.21
+boto3==1.9.143
+botocore==1.12.154
 Click==7.0
 colorama==0.3.9
 docutils==0.15.2
