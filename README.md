@@ -11,11 +11,12 @@ When updating an Auto Scaling Group with a tool like Terraform, no functionality
 This poses a problem in automated deployments (especially CI/CD pipelines): you will deploy updates, but not receieve any feedback on whether or not those changes actually worked. Only by manually terminating instances or scaling up/down can you find out if your changes are working. Performing blue/green deployments of ASGs does not help either, as you have no way of knowing when the workers in the new ASG have succesfully launched.
 
 ## Overview of Steps
-  1. add an EC2 instance to the ASG
-  2. wait for the new instance to be healthy
-  3. drain an instance that is outdated
-  4. terminate the outdated instance
-  5. repeat until all instances are up to date
+  1. get all ASGs attached to cluster
+  2. add an EC2 instance to the ASG
+  3. wait for the new instance to be healthy
+  4. drain an instance that is outdated
+  5. terminate the outdated instance
+  6. repeat until all instances are up to date
 
 ## Usage
 ```
@@ -24,8 +25,9 @@ Usage: eks-node-rollout [OPTIONS]
   Retrieve all outdated workers and perform a rolling update on them.
 
 Options:
-  --asg-name TEXT           ASG name to roll
-  --dry-run / --no-dry-run  Run with read-only API calls.
+  --cluster-name TEXT       Cluster name to discover ASGs from  [required]
+  --dry-run / --no-dry-run  Run with read-only API calls
+  --debug / --no-debug      Enable debug logging
   --help                    Show this message and exit.
 ```
 
@@ -42,19 +44,20 @@ services:
     image: cmdlabs/eks-node-rollout:0.1.0
     env_file: .env
     volumes:
-      - .:/work
-    working_dir: /work
+      - ~/.kube:/root/.kube
+      - ~/.aws:/root/.aws
 ```
 
 Update your `.env` file with the following:
 
 ```
-EKS_NODE_ROLLOUT_ASG_NAME
+EKS_NODE_ROLLOUT_CLUSTER_NAME
 EKS_NODE_ROLLOUT_DRY_RUN
+AWS_PROFILE=my-named-profile (optional)
 ```
 
 Then it can be called as such:
 
 ```bash
-docker-compose run --rm eks-node-rollout eks-node-rollout --asg_name=my-asg
+docker-compose run --rm eks-node-rollout eks-node-rollout --cluster-name=my-eks-cluster
 ```
