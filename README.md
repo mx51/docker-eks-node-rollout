@@ -10,7 +10,9 @@ When updating an Auto Scaling Group with a tool like Terraform, no functionality
 
 This poses a problem in automated deployments (especially CI/CD pipelines): you will deploy updates, but not receieve any feedback on whether or not those changes actually worked. Only by manually terminating instances or scaling up/down can you find out if your changes are working. Performing blue/green deployments of ASGs does not help either, as you have no way of knowing when the workers in the new ASG have succesfully launched.
 
-## Overview of Steps
+## Overview
+These are roughly the actions taken by the tool:
+
   1. get all ASGs attached to cluster
   2. add an EC2 instance to the ASG
   3. wait for the new instance to be healthy
