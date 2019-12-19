@@ -236,7 +236,7 @@ def rollout_nodes(cluster_name, dry_run, debug):
                 latest_node_name = latest_instance["PrivateDnsName"]
                 logging.info(f'Waiting for instance {latest_node_name} to be "Ready"...')
                 logging.info(f'Sleeping 25s before polling.')
-                time.sleep(25)  # instance will never be ready before this, don't bother polling yet
+                time.sleep(35)  # instance will never be ready before this, don't bother polling yet
                 wait_for_ready_node(latest_node_name)
                 logging.info(f'Node {latest_node_name} is now "Ready".')
                 after_instance_count = get_num_of_instances(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
