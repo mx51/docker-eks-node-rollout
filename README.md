@@ -13,12 +13,13 @@ This poses a problem in automated deployments (especially CI/CD pipelines): you 
 ## Overview
 These are roughly the actions taken by the tool:
 
-  1. get all ASGs attached to cluster
-  2. add an EC2 instance to the ASG
-  3. wait for the new instance to be healthy
-  4. drain an instance that is outdated
-  5. terminate the outdated instance
-  6. repeat until all instances are up to date
+  1. Get all ASGs attached to cluster
+  2. Suspend cluster-autoscaler on ASG (if present)
+  3. Add an EC2 instance to the ASG
+  4. Wait for the new instance to be healthy
+  5. Drain an instance that is outdated
+  6. Terminate the outdated instance
+  7. Repeat until all instances are up to date
 
 ## Usage
 ```
