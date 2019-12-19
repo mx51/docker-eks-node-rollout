@@ -230,12 +230,12 @@ def rollout_nodes(cluster_name, dry_run, debug):
                 add_time = datetime.datetime.now(datetime.timezone.utc)
                 add_node(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
                 logging.info(f'Waiting for instance to be created...')
-                logging.info(f'Sleeping 25s before polling.')
+                logging.info(f'Sleeping 25s before polling for instance creation.')
                 time.sleep(25)  # new instance takes a bit to show up in API, don't bother polling yet
                 latest_instance = get_latest_instance(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name, add_time=add_time, dry_run=dry_run)
                 latest_node_name = latest_instance["PrivateDnsName"]
-                logging.info(f'Waiting for instance {latest_node_name} to be "Ready"...')
-                logging.info(f'Sleeping 25s before polling.')
+                logging.info(f'Waiting for node {latest_node_name} to be "Ready"...')
+                logging.info(f'Sleeping 25s before polling for node to be "Ready".')
                 time.sleep(35)  # instance will never be ready before this, don't bother polling yet
                 wait_for_ready_node(latest_node_name)
                 logging.info(f'Node {latest_node_name} is now "Ready".')
