@@ -211,7 +211,7 @@ def rollout_nodes(cluster_name, dry_run, debug):
             # prevent cluster-autoscaler from interrupting our rollout
             logging.info(f"Suspending cluster-autoscaler on {asg_name}...")
             if not dry_run:
-                asg_client.delete_tag(
+                asg_client.delete_tags(
                     Tags=[
                         {
                             'ResourceId': asg_name,
