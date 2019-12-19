@@ -36,14 +36,14 @@ Options:
 The tool also accepts environment variables with the prefix `EKS_NODE_ROLLOUT_*` e.g. `EKS_NODE_ROLLOUT_ASG_NAME`.
 
 ## Docker Image
-This tool is available as a Docker image: `cmdlabs/eks-node-rollout:0.1.1`
+This tool is available as a Docker image: `cmdlabs/eks-node-rollout:0.2.0`
 
 docker-compose.yml:
 ```yml
 version: '3.7'
 services:
   eks-node-rollout:
-    image: cmdlabs/eks-node-rollout:0.1.1
+    image: cmdlabs/eks-node-rollout:0.2.0
     env_file: .env
     volumes:
       - ~/.kube:/root/.kube
