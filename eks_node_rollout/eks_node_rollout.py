@@ -37,7 +37,7 @@ def add_node(asg_client, asg_name, dry_run=True):
         )
     else:
         logging.info(f"--dry-run is set, not scaling up {asg_name}")
-    logging.info(f"Launched a new node in ASG {asg_name}")
+    logging.info(f"Launched a new node in ASG {asg_name}.")
 
 
 def get_latest_lt_version(ec2_client, lt_id):
@@ -126,7 +126,7 @@ def get_latest_instance(asg_client, ec2_client, asg_name, add_time, dry_run=True
         latest_instance = sorted(instances_valid, key=lambda instance: instance["LaunchTime"])[-1]
     except IndexError:
         return None  # backoff.on_predicate will retry if None is returned
-    logging.info(f"Most recently launched instance is {latest_instance['PrivateDnsName']}")
+    logging.info(f"Most recently launched instance is {latest_instance['PrivateDnsName']}.")
 
     return latest_instance
 
