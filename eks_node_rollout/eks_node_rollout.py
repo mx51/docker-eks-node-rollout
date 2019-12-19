@@ -12,9 +12,11 @@ import logging
 import backoff
 import time
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger('boto3').setLevel(logging.CRITICAL)
+logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+logging.getLogger('sh').setLevel(logging.CRITICAL)
 
 
 def add_node(asg_client, asg_name, dry_run=True):
