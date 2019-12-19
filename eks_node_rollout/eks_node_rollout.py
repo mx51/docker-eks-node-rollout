@@ -198,33 +198,78 @@ def rollout_nodes(cluster_name, dry_run, debug):
         logging.info(f"Beginning rolling updates on ASG {asg_name}...")
         instances = describe_nodes_not_matching_lt(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
 
-        for instance in instances:
-            before_instance_count = 0
-            after_instance_count = 0
+        response = asg_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[
+                asg_name
+            ]
+        )
+        # check if cluster-autoscaler tag exists to begin with as we will set the value later on
+        is_cluster_autoscaler_tag_present = len([x for x in response["AutoScalingGroups"][0]["Tags"] if x["Key"] == "k8s.io/cluster-autoscaler/enabled"]) > 0
+        logging.info(f"cluster-autoscaler detected on {asg_name}: {is_cluster_autoscaler_tag_present}.")
 
-            before_instance_count = get_num_of_instances(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
-            add_time = datetime.datetime.now(datetime.timezone.utc)
-            add_node(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
-            logging.info(f'Waiting for instance to be created...')
-            time.sleep(25)  # new instance takes a bit to show up in API, don't bother polling yet
-            latest_instance = get_latest_instance(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name, add_time=add_time, dry_run=dry_run)
-            latest_node_name = latest_instance["PrivateDnsName"]
-            logging.info(f'Waiting for instance {latest_node_name} to be "Ready"...')
-            time.sleep(25)  # instance will never be ready before this, don't bother polling yet
-            wait_for_ready_node(latest_node_name)
-            logging.info(f'Node {latest_node_name} is now "Ready".')
-            after_instance_count = get_num_of_instances(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
-
-            # because get_latest_instance() doesn't necessarily return the instance launched by add_node(), this is just a safety precaution to ensure we've actually launched a node
-            logging.info(f"Had {before_instance_count} instances in {asg_name} before, now have {after_instance_count} instances")
+        if is_cluster_autoscaler_tag_present:
+            # prevent cluster-autoscaler from interrupting our rollout
+            logging.info(f"Suspending cluster-autoscaler on {asg_name}...")
             if not dry_run:
-                assert after_instance_count > before_instance_count
+                asg_client.delete_tag(
+                    Tags=[
+                        {
+                            'ResourceId': asg_name,
+                            'ResourceType': "auto-scaling-group",
+                            'Key': "k8s.io/cluster-autoscaler/enabled"
+                        },
+                    ]
+                )
 
-            node_name = instance["PrivateDnsName"]
-            logging.info(f'Draining node {node_name} (--dry-run={dry_run})')
-            output = kubectl.drain(node_name, "--force", "--delete-local-data=true", "--ignore-daemonsets=true", "--timeout=120s", f"--dry-run={dry_run}")
-            print(output.stdout.decode())
-            terminate_node(asg_client, instance["InstanceId"], dry_run)
+        try:
+            for instance in instances:
+                before_instance_count = 0
+                after_instance_count = 0
+
+                before_instance_count = get_num_of_instances(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
+                add_time = datetime.datetime.now(datetime.timezone.utc)
+                add_node(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
+                logging.info(f'Waiting for instance to be created...')
+                logging.info(f'Sleeping 25s before polling.')
+                time.sleep(25)  # new instance takes a bit to show up in API, don't bother polling yet
+                latest_instance = get_latest_instance(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name, add_time=add_time, dry_run=dry_run)
+                latest_node_name = latest_instance["PrivateDnsName"]
+                logging.info(f'Waiting for instance {latest_node_name} to be "Ready"...')
+                logging.info(f'Sleeping 25s before polling.')
+                time.sleep(25)  # instance will never be ready before this, don't bother polling yet
+                wait_for_ready_node(latest_node_name)
+                logging.info(f'Node {latest_node_name} is now "Ready".')
+                after_instance_count = get_num_of_instances(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
+
+                # because get_latest_instance() doesn't necessarily return the instance launched by add_node(), this is just a safety precaution to ensure we've actually launched a node
+                logging.info(f"Had {before_instance_count} instances in {asg_name} before, now have {after_instance_count} instances")
+                if not dry_run:
+                    assert after_instance_count > before_instance_count
+
+                node_name = instance["PrivateDnsName"]
+                logging.info(f'Draining node {node_name} (--dry-run={dry_run})')
+                output = kubectl.drain(node_name, "--force", "--delete-local-data=true", "--ignore-daemonsets=true", "--timeout=120s", f"--dry-run={dry_run}")
+                print(output.stdout.decode().rstrip())
+
+                terminate_node(asg_client, instance["InstanceId"], dry_run)
+        except Exception:
+            logging.critical(f"Failed to upgrade all nodes in {asg_name}.")
+        finally:
+            if is_cluster_autoscaler_tag_present:
+                # always re-enable cluster-autoscaler even if we fail partway through
+                logging.info(f"Re-enabling cluster-autoscaler on {asg_name}...")
+                if not dry_run:
+                    asg_client.create_or_update_tags(
+                        Tags=[
+                            {
+                                'ResourceId': asg_name,
+                                'ResourceType': "auto-scaling-group",
+                                'Key': "k8s.io/cluster-autoscaler/enabled",
+                                'Value': "true",
+                                'PropagateAtLaunch': False
+                            },
+                        ]
+                    )
 
         logging.info(f"All instances in {asg_name} are up to date.")
 
