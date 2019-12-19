@@ -198,12 +198,16 @@ def rollout_nodes(cluster_name, dry_run, debug):
         logging.info(f"Beginning rolling updates on ASG {asg_name}...")
         instances = describe_nodes_not_matching_lt(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
 
+        if len(instances) == 0:
+            logging.info(f"All instances in {asg_name} are already up to date.")
+            continue
+
+        # check if cluster-autoscaler tag exists to begin with as we will set the value later on
         response = asg_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=[
                 asg_name
             ]
         )
-        # check if cluster-autoscaler tag exists to begin with as we will set the value later on
         is_cluster_autoscaler_tag_present = len([x for x in response["AutoScalingGroups"][0]["Tags"] if x["Key"] == "k8s.io/cluster-autoscaler/enabled"]) > 0
         logging.info(f"cluster-autoscaler detected on {asg_name}: {is_cluster_autoscaler_tag_present}.")
 
