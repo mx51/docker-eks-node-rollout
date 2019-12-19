@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2019-12-19
 - Fix bug related to exception if node upgrade fails
+- Fix typo in boto3 API call
+- Update sleep time to be more accurate
 
 ## [0.2.0] - 2019-12-19
 - Added functionality to suspend cluster-autoscaler
