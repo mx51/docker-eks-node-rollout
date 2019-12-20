@@ -164,13 +164,14 @@ def get_matching_asgs(asg_client, cluster_name):
     return matching_names
 
 
-@backoff.on_predicate(backoff.expo)
+# only using backoff here until the node has registered, after that we rely on kubectl polling
+@backoff.on_predicate(backoff.expo, lambda x: x == "NotFound")
 def wait_for_ready_node(node_name):
     try:
         kubectl.wait("--for", "condition=Ready", f"node/{node_name}", "--timeout=300s")
     except sh.ErrorReturnCode_1 as e:
         if "NotFound" in e.stderr.decode():  # if the node has not even been registered in the API server yet, retry the command with backoff
-            return None
+            return "NotFound"
         else:
             raise
     return True
