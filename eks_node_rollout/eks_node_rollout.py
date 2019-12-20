@@ -243,6 +243,9 @@ def rollout_nodes(cluster_name, dry_run, debug):
 
     asg_names = get_matching_asgs(asg_client=asg_client, cluster_name=cluster_name)
 
+    if len(asg_names) == 0:
+        raise Exception(f"No ASGs for cluster {cluster_name} were found.")
+
     for asg_name in asg_names:
         logging.info(f"Beginning rolling updates on ASG {asg_name}...")
         instances = describe_nodes_not_matching_lt(asg_client=asg_client, ec2_client=ec2_client, asg_name=asg_name)
