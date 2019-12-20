@@ -174,7 +174,55 @@ def wait_for_ready_node(node_name):
             return "NotFound"
         else:
             raise
-    return True
+    return
+
+
+def check_is_cluster_autoscaler_tag_present(asg_client, asg_name):
+    """Just added this to make it easier to test really"""
+
+    # check if cluster-autoscaler tag exists to begin with as we will set the value later on
+    response = asg_client.describe_auto_scaling_groups(
+        AutoScalingGroupNames=[
+            asg_name
+        ]
+    )
+    is_cluster_autoscaler_tag_present = len([x for x in response["AutoScalingGroups"][0]["Tags"] if x["Key"] == "k8s.io/cluster-autoscaler/enabled"]) > 0
+    logging.info(f"cluster-autoscaler detected on {asg_name}: {is_cluster_autoscaler_tag_present}.")
+    return is_cluster_autoscaler_tag_present
+
+
+def disable_autoscaling(asg_client, asg_name, dry_run=True):
+    logging.info(f"Suspending cluster-autoscaler on {asg_name}...")
+    if not dry_run:
+        asg_client.delete_tags(
+            Tags=[
+                {
+                    'ResourceId': asg_name,
+                    'ResourceType': "auto-scaling-group",
+                    'Key': "k8s.io/cluster-autoscaler/enabled"
+                },
+            ]
+        )
+    else:
+        logging.info(f"Dry-run enabled, not actually touching tags on {asg_name}.")
+
+
+def enable_autoscaling(asg_client, asg_name, dry_run=True):
+    logging.info(f"Re-enabling cluster-autoscaler on {asg_name}...")
+    if not dry_run:
+        asg_client.create_or_update_tags(
+            Tags=[
+                {
+                    'ResourceId': asg_name,
+                    'ResourceType': "auto-scaling-group",
+                    'Key': "k8s.io/cluster-autoscaler/enabled",
+                    'Value': "true",
+                    'PropagateAtLaunch': False
+                },
+            ]
+        )
+    else:
+        logging.info(f"Dry-run enabled, not actually touching tags on {asg_name}.")
 
 
 @click.command()
@@ -203,28 +251,11 @@ def rollout_nodes(cluster_name, dry_run, debug):
             logging.info(f"All instances in {asg_name} are already up to date.")
             continue
 
-        # check if cluster-autoscaler tag exists to begin with as we will set the value later on
-        response = asg_client.describe_auto_scaling_groups(
-            AutoScalingGroupNames=[
-                asg_name
-            ]
-        )
-        is_cluster_autoscaler_tag_present = len([x for x in response["AutoScalingGroups"][0]["Tags"] if x["Key"] == "k8s.io/cluster-autoscaler/enabled"]) > 0
-        logging.info(f"cluster-autoscaler detected on {asg_name}: {is_cluster_autoscaler_tag_present}.")
+        is_cluster_autoscaler_tag_present = check_is_cluster_autoscaler_tag_present(asg_client=asg_client, asg_name=asg_name)
 
         if is_cluster_autoscaler_tag_present:
-            # prevent cluster-autoscaler from interrupting our rollout
-            logging.info(f"Suspending cluster-autoscaler on {asg_name}...")
-            if not dry_run:
-                asg_client.delete_tags(
-                    Tags=[
-                        {
-                            'ResourceId': asg_name,
-                            'ResourceType': "auto-scaling-group",
-                            'Key': "k8s.io/cluster-autoscaler/enabled"
-                        },
-                    ]
-                )
+            # Prevent cluster-autoscaler from interrupting our rollout
+            disable_autoscaling(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
 
         try:
             for instance in instances:
@@ -260,22 +291,9 @@ def rollout_nodes(cluster_name, dry_run, debug):
         except Exception:
             logging.critical(f"Failed to upgrade all nodes in {asg_name}.")
             raise
-        finally:
+        finally: # always re-enable cluster-autoscaler even if we fail partway through
             if is_cluster_autoscaler_tag_present:
-                # always re-enable cluster-autoscaler even if we fail partway through
-                logging.info(f"Re-enabling cluster-autoscaler on {asg_name}...")
-                if not dry_run:
-                    asg_client.create_or_update_tags(
-                        Tags=[
-                            {
-                                'ResourceId': asg_name,
-                                'ResourceType': "auto-scaling-group",
-                                'Key': "k8s.io/cluster-autoscaler/enabled",
-                                'Value': "true",
-                                'PropagateAtLaunch': False
-                            },
-                        ]
-                    )
+                enable_autoscaling(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
 
         logging.info(f"All instances in {asg_name} are up to date.")
 
