@@ -7,7 +7,7 @@ PHONY: build
 
 test:
 	docker-compose run --rm pep8 pep8 --ignore 'E501,E128' eks_node_rollout/eks_node_rollout.py
-PHONY: styleTest
+PHONY: test
 
 release:
 	./scripts/make.sh release
