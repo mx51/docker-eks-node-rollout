@@ -294,7 +294,8 @@ def rollout_nodes(cluster_name, dry_run, debug):
         except Exception:
             logging.critical(f"Failed to upgrade all nodes in {asg_name}.")
             raise
-        finally: # always re-enable cluster-autoscaler even if we fail partway through
+        finally:
+            # always re-enable cluster-autoscaler even if we fail partway through
             if is_cluster_autoscaler_tag_present:
                 enable_autoscaling(asg_client=asg_client, asg_name=asg_name, dry_run=dry_run)
 

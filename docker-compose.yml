@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   eks-node-rollout:
-    image: cmdlabs/eks-node-rollout:testing
+    image: mx51io/eks-node-rollout:testing
     build: .
     env_file: .env
     volumes:

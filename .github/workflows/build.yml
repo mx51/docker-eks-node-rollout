@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - 'version-*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Build
+        run: make clean build
+
+      - name: Test
+        run: make test

@@ -3,3 +3,6 @@ venv/
 !.env.template
 .tox/
 **/__pycache__
+version.json
+build.json
+working/
