@@ -12,6 +12,12 @@ BUILD_ARTEFACT_PATH="artefacts/"
 # FUNCTIONS
 ###
 
+die() {
+  msg="$1"
+  echo -e "$msg\nAborting."
+  exit 1
+}
+
 source_version_value() {
   # Check for GITHUB_REF value
   if [ ! -z "$GITHUB_REF" ]; then
@@ -34,11 +40,17 @@ source_version_value() {
   fi
 
   # Apply name fix
-  #BRANCH_NAME=${BRANCH_NAME##"heads/"}
   BRANCH_NAME=$( echo $BRANCH_NAME | tr '/' '-' )
 
-  # Strip 'version-' string if present
-  export DOCKER_TAG_NAME=${BRANCH_NAME##"version-"}
+  # Strip 'version-*' substring if present
+  BRANCH_NAME=${BRANCH_NAME##"version-"}
+
+  # Check for 'v*.*.*' tag format
+  if [[ $BRANCH_NAME =~ ^v[0-9]+.[0-9]+.[0-9]+ ]]; then
+    BRANCH_NAME=${BRANCH_NAME##"v"}
+  fi
+
+  export DOCKER_TAG_NAME=$BRANCH_NAME
 }
 
 generate_build_props() {
@@ -77,11 +89,11 @@ build() {
 
 release() {
   echo " * Pushing image: $IMAGE_NAME:latest ..."
-  docker push $IMAGE_NAME:latest
+  docker push $IMAGE_NAME:latest || die "error: failed to push image"
   echo
 
   echo " * Pushing image: $IMAGE_NAME:$DOCKER_TAG_NAME ..."
-  docker push $IMAGE_NAME:$DOCKER_TAG_NAME
+  docker push $IMAGE_NAME:$DOCKER_TAG_NAME || die "error: failed to push image"
   echo
 }
 
