@@ -1,3 +1,7 @@
+#!/usr/bin/env make
+
+include Makehelp.mk
+
 export IMAGE_NAME ?= mx51io/eks-node-rollout
 IMAGE = $(IMAGE_NAME):latest
 
